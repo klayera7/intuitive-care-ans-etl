@@ -6,7 +6,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,12 +17,12 @@ public class Main {
     private static final String DOWNLOAD_DIR = "downloads_ans";
 
     public static void main(String[] args) {
-        System.out.println("Iniciando o Coletor de Dados da ANS...");
+        System.out.println("Iniciando o Sistema ETL...");
 
         try {
             String accountingUrl = findLinkByText(BASE_URL, "demonstracoes_contabeis");
             if (accountingUrl == null) {
-                System.err.println("Erro: Pasta 'Demonstrações Contábeis' não encontrada.");
+                System.err.println("Erro: Pasta nao encontrada.");
                 return;
             }
             System.out.println("Pasta encontrada: " + accountingUrl);
@@ -34,7 +33,23 @@ public class Main {
                 downloadAndUnzip(zipUrl);
             }
 
-            System.out.println("\nMissão 1 concluída! Verifique a pasta: " + DOWNLOAD_DIR);
+            System.out.println("\nIniciando Processamento e Consolidacao dos Dados...");
+
+            ProcessadorCSV processador = new ProcessadorCSV();
+            List<ProcessadorCSV.DadosDespesa> todosDados = new ArrayList<>();
+
+            File pastaExtracted = new File(DOWNLOAD_DIR + "/extracted");
+            File[] arquivosCSV = pastaExtracted.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
+
+            if (arquivosCSV != null && arquivosCSV.length > 0) {
+                for (File arquivo : arquivosCSV) {
+                    todosDados.addAll(processador.processarArquivo(arquivo));
+                }
+            } else {
+                System.err.println("Nenhum arquivo CSV encontrado para processar.");
+            }
+
+            System.out.println("Total Consolidado: " + todosDados.size() + " registros de despesas carregados.");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -49,7 +64,6 @@ public class Main {
     private static String findLinkByText(String url, String partialText) throws IOException {
         Document doc = Jsoup.connect(url).get();
         Elements links = doc.select("a[href]");
-
         for (Element link : links) {
             if (link.attr("href").toLowerCase().contains(partialText.toLowerCase())) {
                 return resolveUrl(url, link.attr("href"));
@@ -59,10 +73,9 @@ public class Main {
     }
 
     private static List<String> getLatest3Quarters(String baseUrl) throws IOException {
-        System.out.println("Buscando os últimos 3 arquivos ZIP...");
+        System.out.println("Buscando os ultimos 3 arquivos ZIP...");
         Document doc = Jsoup.connect(baseUrl).get();
         Elements links = doc.select("a[href]");
-
         TreeMap<Integer, String> yearsMap = new TreeMap<>(Collections.reverseOrder());
 
         for (Element link : links) {
@@ -78,15 +91,14 @@ public class Main {
 
         for (Map.Entry<Integer, String> entry : yearsMap.entrySet()) {
             if (count >= 3) break;
-
             int year = entry.getKey();
             String yearUrl = entry.getValue();
 
-            System.out.println("📂 Verificando ano: " + year);
+            if (!yearUrl.endsWith("/")) yearUrl += "/";
 
+            System.out.println("Verificando ano: " + year);
             Document yearDoc = Jsoup.connect(yearUrl).get();
             Elements zipLinks = yearDoc.select("a[href$='.zip']");
-
             List<String> yearZips = new ArrayList<>();
 
             for (Element zipLink : zipLinks) {
@@ -95,14 +107,11 @@ public class Main {
                     yearZips.add(href);
                 }
             }
-
             yearZips.sort(Collections.reverseOrder());
 
             for (String zipName : yearZips) {
                 if (count >= 3) break;
-
-                String fullUrl = resolveUrl(yearUrl, zipName);
-                zipUrlsToProcess.add(fullUrl);
+                zipUrlsToProcess.add(resolveUrl(yearUrl, zipName));
                 System.out.println("   -> Alvo identificado: " + zipName);
                 count++;
             }
@@ -112,12 +121,14 @@ public class Main {
 
     private static void downloadAndUnzip(String zipUrl) throws IOException {
         String fileName = zipUrl.substring(zipUrl.lastIndexOf("/") + 1);
-
-        System.out.println("Baixando: " + fileName);
         File zipFile = new File(DOWNLOAD_DIR, fileName);
 
-        // Baixa
-        FileUtils.copyURLToFile(new URL(zipUrl), zipFile);
+        if (!zipFile.exists()) {
+            System.out.println("Baixando: " + fileName);
+            FileUtils.copyURLToFile(new URL(zipUrl), zipFile);
+        } else {
+            System.out.println("Arquivo ja baixado: " + fileName);
+        }
 
         System.out.println("Extraindo: " + fileName);
         unzip(zipFile.getAbsolutePath(), DOWNLOAD_DIR + "/extracted");
@@ -126,17 +137,14 @@ public class Main {
     private static void unzip(String zipFilePath, String destDir) throws IOException {
         File dir = new File(destDir);
         if (!dir.exists()) dir.mkdirs();
-
         byte[] buffer = new byte[1024];
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
             ZipEntry zipEntry = zis.getNextEntry();
             while (zipEntry != null) {
                 File newFile = new File(destDir, zipEntry.getName());
-
                 if (!newFile.getCanonicalPath().startsWith(dir.getCanonicalPath())) {
                     throw new IOException("Entrada ZIP fora do destino");
                 }
-
                 if (zipEntry.isDirectory()) {
                     newFile.mkdirs();
                 } else {
