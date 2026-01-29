@@ -49,10 +49,41 @@ public class Main {
                 System.err.println("Nenhum arquivo CSV encontrado para processar.");
             }
 
-            System.out.println("Total Consolidado: " + todosDados.size() + " registros de despesas carregados.");
+            System.out.println("Total Consolidado na Memoria: " + todosDados.size());
+
+            System.out.println("\nGerando arquivo final...");
+            EscritorCSV escritor = new EscritorCSV();
+            escritor.salvarArquivoConsolidado(todosDados, "consolidado_despesas.csv");
+
+            System.out.println("\nRealizando auditoria...");
+            Auditoria auditoria = new Auditoria();
+            auditoria.realizarAuditoria("consolidado_despesas.csv");
+
+            zipArquivo("consolidado_despesas.csv", "consolidado_despesas.zip");
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void zipArquivo(String arquivoOrigem, String arquivoDestino) {
+        System.out.println("Compactando arquivo final: " + arquivoDestino);
+        try (FileOutputStream fos = new FileOutputStream(arquivoDestino);
+             java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(fos);
+             FileInputStream fis = new FileInputStream(arquivoOrigem)) {
+
+            java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(new File(arquivoOrigem).getName());
+            zos.putNextEntry(zipEntry);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) >= 0) {
+                zos.write(buffer, 0, length);
+            }
+            System.out.println("Arquivo ZIP gerado com sucesso!");
+
+        } catch (IOException e) {
+            System.err.println("Erro ao zipar arquivo: " + e.getMessage());
         }
     }
 
