@@ -1,0 +1,22 @@
+# --- Maven (Essencial) ---
+target/
+
+# --- IntelliJ IDEA (Configurações locais) ---
+.idea/
+*.iml
+out/
+
+# --- Dados do Projeto (Não enviar arquivos pesados) ---
+downloads_ans/
+
+# --- Arquivos de Sistema Operacional ---
+.DS_Store
+Thumbs.db
+
+# --- Outros IDEs (Caso abras noutro lugar) ---
+.vscode/
+.eclipse/
+.classpath
+.project
+.settings/
+bin/
