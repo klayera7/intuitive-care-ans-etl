@@ -13,7 +13,7 @@ public class Auditoria {
         File arquivo = new File(caminhoArquivo);
 
         if (!arquivo.exists()) {
-            System.err.println("❌ Arquivo para auditoria não encontrado.");
+            System.err.println("Arquivo para auditoria não encontrado.");
             return;
         }
 
@@ -30,7 +30,7 @@ public class Auditoria {
                 String[] colunas = linha.split(";");
 
                 if (colunas.length < 5) {
-                    System.out.println("⚠️ Inconsistência na linha " + linhasTotais + ": Colunas faltando.");
+                    System.out.println("Inconsistência na linha " + linhasTotais + ": Colunas faltando.");
                     continue;
                 }
 
