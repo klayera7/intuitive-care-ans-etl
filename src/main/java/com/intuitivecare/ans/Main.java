@@ -59,6 +59,12 @@ public class Main {
             Auditoria auditoria = new Auditoria();
             auditoria.realizarAuditoria("consolidado_despesas.csv");
 
+            System.out.println("\n--- TESTE DE COMPONENTES DE VALIDAÇÃO ---");
+            System.out.println("Teste CNPJ Válido (Google): " + ValidadorDados.isCNPJValido("06.990.590/0001-23")); // Deve dar true
+            System.out.println("Teste CNPJ Inválido: " + ValidadorDados.isCNPJValido("11.111.111/1111-11")); // Deve dar false
+            System.out.println("Teste Valor Positivo (100.0): " + ValidadorDados.isValorPositivo(100.0));
+            System.out.println("Teste Valor Negativo (-50.0): " + ValidadorDados.isValorPositivo(-50.0));
+
             zipArquivo("consolidado_despesas.csv", "consolidado_despesas.zip");
 
         } catch (Exception e) {
