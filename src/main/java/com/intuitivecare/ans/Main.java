@@ -68,32 +68,44 @@ public class Main {
             ServicoEnriquecimento enriquecedor = new ServicoEnriquecimento();
             enriquecedor.executarEnriquecimento("consolidado_despesas.csv", "consolidado_enriquecido.csv");
 
-            zipArquivo("consolidado_enriquecido.csv", "consolidado_despesas.zip");
+            ServicoAgregacao agregador = new ServicoAgregacao();
+            agregador.gerarRelatorioEstatistico("consolidado_enriquecido.csv", "relatorio_estatistico.csv");
+
+            List<String> arquivosParaZipar = Arrays.asList("consolidado_enriquecido.csv", "relatorio_estatistico.csv");
+            zipArquivos(arquivosParaZipar, "consolidado_despesas.zip");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void zipArquivo(String arquivoOrigem, String arquivoDestino) {
-        System.out.println("Compactando arquivo final: " + arquivoDestino);
+    private static void zipArquivos(List<String> arquivosOrigem, String arquivoDestino) {
+        System.out.println("Compactando arquivos finais: " + arquivoDestino);
         try (FileOutputStream fos = new FileOutputStream(arquivoDestino);
-             java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(fos);
-             FileInputStream fis = new FileInputStream(arquivoOrigem)) {
+             java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(fos)) {
 
-            // Nome do arquivo dentro do ZIP
-            java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(new File(arquivoOrigem).getName());
-            zos.putNextEntry(zipEntry);
+            for (String srcFile : arquivosOrigem) {
+                File fileToZip = new File(srcFile);
+                if (!fileToZip.exists()) {
+                    System.err.println("Arquivo nao encontrado para zipar: " + srcFile);
+                    continue;
+                }
 
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = fis.read(buffer)) >= 0) {
-                zos.write(buffer, 0, length);
+                try (FileInputStream fis = new FileInputStream(fileToZip)) {
+                    java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(fileToZip.getName());
+                    zos.putNextEntry(zipEntry);
+
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = fis.read(buffer)) >= 0) {
+                        zos.write(buffer, 0, length);
+                    }
+                }
             }
             System.out.println("Arquivo ZIP gerado com sucesso!");
 
         } catch (IOException e) {
-            System.err.println("Erro ao zipar arquivo: " + e.getMessage());
+            System.err.println("Erro ao zipar arquivos: " + e.getMessage());
         }
     }
 
