@@ -51,7 +51,7 @@ public class Main {
 
             System.out.println("Total Consolidado na Memoria: " + todosDados.size());
 
-            System.out.println("\nGerando arquivo final...");
+            System.out.println("\nGerando arquivo consolidado preliminar...");
             EscritorCSV escritor = new EscritorCSV();
             escritor.salvarArquivoConsolidado(todosDados, "consolidado_despesas.csv");
 
@@ -60,12 +60,15 @@ public class Main {
             auditoria.realizarAuditoria("consolidado_despesas.csv");
 
             System.out.println("\n--- TESTE DE COMPONENTES DE VALIDAÇÃO ---");
-            System.out.println("Teste CNPJ Válido (Google): " + ValidadorDados.isCNPJValido("06.990.590/0001-23")); // Deve dar true
-            System.out.println("Teste CNPJ Inválido: " + ValidadorDados.isCNPJValido("11.111.111/1111-11")); // Deve dar false
+            System.out.println("Teste CNPJ Válido (Google): " + ValidadorDados.isCNPJValido("06.990.590/0001-23"));
+            System.out.println("Teste CNPJ Inválido: " + ValidadorDados.isCNPJValido("11.111.111/1111-11"));
             System.out.println("Teste Valor Positivo (100.0): " + ValidadorDados.isValorPositivo(100.0));
             System.out.println("Teste Valor Negativo (-50.0): " + ValidadorDados.isValorPositivo(-50.0));
 
-            zipArquivo("consolidado_despesas.csv", "consolidado_despesas.zip");
+            ServicoEnriquecimento enriquecedor = new ServicoEnriquecimento();
+            enriquecedor.executarEnriquecimento("consolidado_despesas.csv", "consolidado_enriquecido.csv");
+
+            zipArquivo("consolidado_enriquecido.csv", "consolidado_despesas.zip");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,6 +81,7 @@ public class Main {
              java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(fos);
              FileInputStream fis = new FileInputStream(arquivoOrigem)) {
 
+            // Nome do arquivo dentro do ZIP
             java.util.zip.ZipEntry zipEntry = new java.util.zip.ZipEntry(new File(arquivoOrigem).getName());
             zos.putNextEntry(zipEntry);
 
