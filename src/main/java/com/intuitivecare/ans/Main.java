@@ -69,9 +69,9 @@ public class Main {
             enriquecedor.executarEnriquecimento("consolidado_despesas.csv", "consolidado_enriquecido.csv");
 
             ServicoAgregacao agregador = new ServicoAgregacao();
-            agregador.gerarRelatorioEstatistico("consolidado_enriquecido.csv", "relatorio_estatistico.csv");
+            agregador.gerarRelatorioEstatistico("consolidado_enriquecido.csv", "despesas_agregadas.csv");
 
-            List<String> arquivosParaZipar = Arrays.asList("consolidado_enriquecido.csv", "relatorio_estatistico.csv");
+            List<String> arquivosParaZipar = Arrays.asList("consolidado_enriquecido.csv", "despesas_agregadas.csv");
             zipArquivos(arquivosParaZipar, "consolidado_despesas.zip");
 
         } catch (Exception e) {
